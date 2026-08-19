@@ -4,33 +4,52 @@ on:
   workflow_dispatch:
 
   schedule:
-    # 08:45 AM IST every day = 03:15 UTC
+    # 08:45 AM IST
     - cron: "15 3 * * *"
+
+    # 11:45 AM IST
+    - cron: "15 6 * * *"
+
+    # 02:45 PM IST
+    - cron: "15 9 * * *"
+
+    # 05:45 PM IST
+    - cron: "15 12 * * *"
+
+    # 08:45 PM IST
+    - cron: "15 15 * * *"
 
 permissions:
   contents: write
 
 jobs:
   daily-practice:
+
     runs-on: ubuntu-latest
 
     steps:
+
+      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Configure Git
-        run: |
-          git config user.name "raju-nalla"
-          git config user.email "114662625+raju-nalla@users.noreply.github.com."
+      # 2. Setup Python
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-      - name: Generate daily practice
+      # 3. Generate next Data Engineering exercise
+      - name: Generate next exercise
         run: |
           python scripts/daily_practice.py
 
-      - name: Check changes
+      # 4. Check whether a new exercise was created
+      - name: Check for changes
         id: changes
+        shell: bash
         run: |
           if [[ -n "$(git status --porcelain)" ]]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -38,12 +57,19 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # 5. Commit the new exercise
       - name: Commit practice
         if: steps.changes.outputs.changed == 'true'
         run: |
-          git add .
-          git commit -m "chore(practice): add daily data engineering exercise"
+          git config user.name "Raju Nalla"
+          git config user.email "YOUR_GITHUB_NOREPLY_EMAIL"
 
+          git add .
+
+          git commit \
+            -m "chore(practice): add next data engineering exercise"
+
+      # 6. Push to GitHub
       - name: Push changes
         if: steps.changes.outputs.changed == 'true'
         run: |

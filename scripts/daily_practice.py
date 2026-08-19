@@ -1,9 +1,31 @@
 from pathlib import Path
-from datetime import datetime
+
+
+# ============================================================
+# Configuration
+# ============================================================
 
 ROOT = Path(__file__).resolve().parent.parent
 
+
+# ============================================================
+# Exercise List
+# ============================================================
+# Add new exercises ONLY inside this list.
+#
+# Each exercise contains:
+# 1. Folder
+# 2. File name
+# 3. Commit message
+# 4. File content
+# ============================================================
+
 exercises = [
+
+    # --------------------------------------------------------
+    # SQL
+    # --------------------------------------------------------
+
     (
         "sql",
         "07_scd_type2.sql",
@@ -94,6 +116,61 @@ FROM Orders;
     ),
 
     (
+        "sql",
+        "09_query_optimization.sql",
+        "feat(sql): add query optimization practice",
+        """-- Data Engineering Practice
+-- Topic: SQL Query Optimization
+
+-- Example query
+SELECT
+    CustomerID,
+    COUNT(*) AS OrderCount,
+    SUM(Amount) AS TotalAmount
+FROM Orders
+GROUP BY CustomerID
+ORDER BY TotalAmount DESC;
+
+-- Optimization ideas:
+-- 1. Check execution plan
+-- 2. Review indexes
+-- 3. Avoid SELECT *
+-- 4. Filter early
+-- 5. Check table statistics
+"""
+    ),
+
+    (
+        "sql",
+        "10_stored_procedure.sql",
+        "feat(sql): add stored procedure practice",
+        """-- Data Engineering Practice
+-- Topic: Stored Procedure
+
+CREATE PROCEDURE GetCustomerOrders
+    @CustomerID INT
+AS
+BEGIN
+
+    SELECT
+        OrderID,
+        CustomerID,
+        OrderDate,
+        Amount
+    FROM Orders
+    WHERE CustomerID = @CustomerID
+    ORDER BY OrderDate DESC;
+
+END;
+"""
+    ),
+
+
+    # --------------------------------------------------------
+    # PySpark
+    # --------------------------------------------------------
+
+    (
         "pyspark",
         "01_dataframe_transformations.py",
         "feat(pyspark): add dataframe transformations practice",
@@ -163,6 +240,73 @@ result.show()
     ),
 
     (
+        "pyspark",
+        "03_window_functions.py",
+        "feat(pyspark): add window functions practice",
+        """# Data Engineering Practice
+# Topic: PySpark Window Functions
+
+from pyspark.sql import functions as F
+from pyspark.sql.window import Window
+
+window_spec = (
+    Window
+    .partitionBy("CustomerID")
+    .orderBy(F.col("OrderDate"))
+)
+
+result = (
+    orders
+    .withColumn(
+        "PreviousAmount",
+        F.lag("Amount").over(window_spec)
+    )
+    .withColumn(
+        "RunningTotal",
+        F.sum("Amount").over(window_spec)
+    )
+)
+
+result.show()
+"""
+    ),
+
+    (
+        "pyspark",
+        "04_deduplication.py",
+        "feat(pyspark): add deduplication practice",
+        """# Data Engineering Practice
+# Topic: PySpark Deduplication
+
+from pyspark.sql import functions as F
+from pyspark.sql.window import Window
+
+window_spec = (
+    Window
+    .partitionBy("CustomerID")
+    .orderBy(F.col("UpdatedAt").desc())
+)
+
+deduplicated_df = (
+    df
+    .withColumn(
+        "row_num",
+        F.row_number().over(window_spec)
+    )
+    .filter(F.col("row_num") == 1)
+    .drop("row_num")
+)
+
+deduplicated_df.show()
+"""
+    ),
+
+
+    # --------------------------------------------------------
+    # Databricks
+    # --------------------------------------------------------
+
+    (
         "databricks",
         "01_bronze_ingestion.py",
         "feat(databricks): add bronze ingestion practice",
@@ -228,6 +372,59 @@ source = spark.read.parquet(
     ),
 
     (
+        "databricks",
+        "03_incremental_load.py",
+        "feat(databricks): add incremental loading practice",
+        """# Databricks Practice
+# Topic: Incremental Loading
+
+from pyspark.sql import functions as F
+
+last_watermark = "2026-01-01 00:00:00"
+
+df = spark.read.parquet("/mnt/bronze/orders")
+
+incremental_df = (
+    df
+    .filter(
+        F.col("LastModifiedDate") > last_watermark
+    )
+)
+
+incremental_df.show()
+"""
+    ),
+
+    (
+        "databricks",
+        "04_spark_optimization.py",
+        "feat(databricks): add spark optimization practice",
+        """# Databricks Practice
+# Topic: Spark Optimization
+
+from pyspark.sql import functions as F
+
+result = (
+    orders
+    .repartition("CustomerID")
+    .filter(F.col("Amount") > 0)
+    .select(
+        "OrderID",
+        "CustomerID",
+        "Amount"
+    )
+)
+
+result.explain(True)
+"""
+    ),
+
+
+    # --------------------------------------------------------
+    # ETL
+    # --------------------------------------------------------
+
+    (
         "etl",
         "01_pipeline_watermark.py",
         "feat(etl): add pipeline watermark practice",
@@ -255,34 +452,120 @@ WHERE LastModifiedDate > '{last_watermark}'
 # the target load succeeds.
 """
     ),
+
+    (
+        "etl",
+        "02_cdc_pipeline.py",
+        "feat(etl): add CDC pipeline practice",
+        """# Data Engineering Practice
+# Topic: Change Data Capture
+
+# CDC pipeline pattern:
+#
+# 1. Read CDC changes
+# 2. Identify INSERT / UPDATE / DELETE
+# 3. Transform records
+# 4. Apply changes to target
+# 5. Validate counts
+# 6. Store processing watermark
+
+cdc_query = '''
+SELECT
+    CustomerID,
+    Operation,
+    LastModifiedDate
+FROM CustomerChanges
+WHERE LastModifiedDate > @LastWatermark
+'''
+"""
+    ),
+
+    (
+        "etl",
+        "03_data_validation.py",
+        "feat(etl): add pipeline validation practice",
+        """# Data Engineering Practice
+# Topic: ETL Validation
+
+def validate_counts(source_count, target_count):
+    if source_count != target_count:
+        raise ValueError(
+            f"Count mismatch: "
+            f"source={source_count}, "
+            f"target={target_count}"
+        )
+
+    print("Validation successful")
+"""
+    ),
 ]
 
 
-def main():
-    # Use UTC date so the workflow is deterministic.
-    today = datetime.utcnow().date()
-    index = (today.toordinal() - 1) % len(exercises)
+# ============================================================
+# Find the next exercise
+# ============================================================
 
-    folder, filename, commit_message, content = exercises[index]
+def find_next_exercise():
+
+    for exercise in exercises:
+
+        folder, filename, commit_message, content = exercise
+
+        target_file = ROOT / folder / filename
+
+        if not target_file.exists():
+            return exercise
+
+    return None
+
+
+# ============================================================
+# Create next exercise
+# ============================================================
+
+def main():
+
+    exercise = find_next_exercise()
+
+    if exercise is None:
+
+        print("========================================")
+        print("All exercises have been completed.")
+        print("Nothing to commit.")
+        print("========================================")
+
+        return
+
+    folder, filename, commit_message, content = exercise
 
     target_dir = ROOT / folder
-    target_dir.mkdir(parents=True, exist_ok=True)
+
+    target_dir.mkdir(
+        parents=True,
+        exist_ok=True
+    )
 
     target_file = target_dir / filename
-
-    # Don't overwrite an existing exercise.
-    if target_file.exists():
-        print(f"Exercise already exists: {target_file}")
-        return
 
     target_file.write_text(
         content.strip() + "\n",
         encoding="utf-8"
     )
 
-    print(f"Created: {target_file}")
-    print(f"Commit: {commit_message}")
+    print("========================================")
+    print("New exercise created")
+    print("========================================")
 
+    print(f"Folder : {folder}")
+    print(f"File   : {filename}")
+    print(f"Commit : {commit_message}")
+
+    print("========================================")
+
+
+# ============================================================
+# Entry Point
+# ============================================================
 
 if __name__ == "__main__":
     main()
