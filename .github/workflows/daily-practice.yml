@@ -1,0 +1,50 @@
+name: Daily Data Engineering Practice
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    # 08:45 AM IST every day = 03:15 UTC
+    - cron: "15 3 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  daily-practice:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "raju-nalla"
+          git config user.email "114662625+raju-nalla@users.noreply.github.com."
+
+      - name: Generate daily practice
+        run: |
+          python scripts/daily_practice.py
+
+      - name: Check changes
+        id: changes
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit practice
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git add .
+          git commit -m "chore(practice): add daily data engineering exercise"
+
+      - name: Push changes
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git push origin main
