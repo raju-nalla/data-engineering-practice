@@ -77,7 +77,7 @@ WHERE Salary > Avg_Dept_Salary;
 
 
 
-# SQL Problem 2 — Latest Record Per Customer Using ROW_NUMBER()
+# SQL Problem 3 — Latest Record Per Customer Using ROW_NUMBER()
 
 ## 🎯 Difficulty
 
@@ -208,7 +208,7 @@ First calculate the total spending for each customer:
 The average customer spending is:
 
 # ```text
-(900 + 900 + 300 + 800) / 4 = 725
+ (900 + 900 + 300 + 800) / 4 = 725
 
 ## Solution
 
@@ -232,3 +232,107 @@ SELECT
 FROM CustomerSpending cs
 CROSS JOIN AverageSpending av
 WHERE cs.TotalSpending > av.AvgCustomerSpending;
+
+
+# PySpark Problem 4 — Filter Invalid Records
+
+## 🎯 Difficulty
+
+Intermediate
+
+## 🧩 Problem
+
+You are given an `orders` PySpark DataFrame containing order information.
+
+An order is considered **invalid** if any of the following conditions are true:
+
+- `OrderID` is `NULL`
+- `CustomerID` is `NULL`
+- `Amount <= 0`
+- `Status = 'CANCELLED'`
+
+Write PySpark code to filter out all invalid records and return **only valid orders**.
+
+The solution should return:
+
+- Order ID
+- Customer ID
+- Order Date
+- Amount
+- Status
+
+---
+
+## 📋 Orders DataFrame
+
+### DataFrame: `orders`
+
+| OrderID | CustomerID | OrderDate | Amount | Status |
+|---:|---:|---|---:|---|
+| 1001 | 101 | 2026-01-05 | 250 | COMPLETED |
+| 1002 | 102 | 2026-01-07 | 500 | COMPLETED |
+| 1003 | NULL | 2026-01-10 | 300 | COMPLETED |
+| 1004 | 103 | 2026-01-12 | -50 | COMPLETED |
+| 1005 | 104 | 2026-01-15 | 400 | CANCELLED |
+| NULL | 105 | 2026-01-18 | 200 | COMPLETED |
+| 1007 | 106 | 2026-01-20 | 750 | COMPLETED |
+
+---
+
+## 💡 Expected Result
+
+| OrderID | CustomerID | OrderDate | Amount | Status |
+|---:|---:|---|---:|---|
+| 1001 | 101 | 2026-01-05 | 250 | COMPLETED |
+| 1002 | 102 | 2026-01-07 | 500 | COMPLETED |
+| 1007 | 106 | 2026-01-20 | 750 | COMPLETED |
+
+---
+
+## 🎯 Skills Tested
+
+- PySpark DataFrame API
+- `filter()`
+- `select()`
+- `F.col()`
+- `isNotNull()`
+- Boolean conditions
+- Data quality validation
+- Handling invalid records
+
+---
+
+## 🧠 Approach
+
+We first identify the conditions that make a record invalid:
+
+## ```text
+ OrderID IS NULL
+OR
+CustomerID IS NULL
+OR
+Amount <= 0
+OR
+Status = 'CANCELLED'
+
+## Solution
+
+from pyspark.sql import functions as F
+
+df_orders = (
+    orders
+    .filter(
+        F.col("OrderID").isNotNull()
+        & F.col("CustomerID").isNotNull()
+        & (F.col("Amount") > 0)
+        & (F.col("Status") != "CANCELLED")
+    )
+    .select(
+        "OrderID",
+        "CustomerID",
+        "Amount",
+        "Status"
+    )
+)
+
+df_orders.show()
