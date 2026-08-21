@@ -66,13 +66,89 @@ WHERE Salary > Avg_Dept_Salary;
 
 # 🧠 Approach
 
-We need to compare every employee's salary with the average salary of their department.
+ We need to compare every employee's salary with the average salary of their department.
 
-A regular `GROUP BY` would produce only one row per department and would therefore lose the individual employee information.
+ A regular `GROUP BY` would produce only one row per department and would therefore lose the individual employee information.
 
-Instead, we can use a **window function**:
+ Instead, we can use a **window function**:
 
-```sql
-AVG(Salary) OVER (PARTITION BY DepartmentID)
+# ```sql
+-  AVG(Salary) OVER (PARTITION BY DepartmentID)
 
 
+
+# SQL Problem 2 — Latest Record Per Customer Using ROW_NUMBER()
+
+## 🎯 Difficulty
+
+Intermediate
+
+## 📋 Orders Table
+
+### Table: `Orders`
+
+| OrderID | CustomerID | OrderDate | Amount |
+|---:|---:|---|---:|
+| 1001 | 101 | 2026-01-05 | 250 |
+| 1002 | 102 | 2026-01-07 | 500 |
+| 1003 | 101 | 2026-02-10 | 300 |
+| 1004 | 103 | 2026-02-15 | 150 |
+| 1005 | 102 | 2026-03-01 | 700 |
+| 1006 | 101 | 2026-03-12 | 450 |
+| 1007 | 103 | 2026-03-20 | 200 |
+
+---
+
+## 💡 Expected Result
+
+| CustomerID | OrderID | OrderDate | Amount |
+|---:|---:|---|---:|
+| 101 | 1006 | 2026-03-12 | 450 |
+| 102 | 1005 | 2026-03-01 | 700 |
+| 103 | 1007 | 2026-03-20 | 200 |
+
+## 🧩 Problem
+
+You are given an `Orders` table containing customer order information.
+
+Write a SQL query to find the **most recent order for each customer**.
+
+The solution should return:
+
+- Customer ID
+- Order ID
+- Order Date
+- Order Amount
+
+
+---
+
+## 🧠 Interview Requirement
+
+You should solve this problem using:
+
+# ```sql
+- ROW_NUMBER()
+
+# Solution
+ WITH CTE AS
+(
+    SELECT
+        CustomerID,
+        OrderID,
+        OrderDate,
+        OrderAmount,
+        ROW_NUMBER() OVER
+        (
+            PARTITION BY CustomerID
+            ORDER BY OrderDate DESC
+        ) AS rn
+    FROM Orders
+)
+SELECT
+    CustomerID,
+    OrderID,
+    OrderDate,
+    OrderAmount
+FROM CTE
+WHERE rn = 1;
