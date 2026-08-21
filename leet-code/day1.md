@@ -152,3 +152,83 @@ SELECT
     OrderAmount
 FROM CTE
 WHERE rn = 1;
+
+
+# SQL Problem 3 — Customers Spending Above Average
+
+## 🎯 Difficulty
+
+Intermediate → Advanced
+
+## 🧩 Problem
+
+You are given an `Orders` table containing customer order information.
+
+Write a SQL query to:
+
+1. Calculate the **total spending for each customer**.
+2. Calculate the **average spending across all customers**.
+3. Return customers whose **total spending is greater than the average customer spending**.
+
+The solution should return:
+
+- Customer ID
+- Total Spending
+
+---
+
+## 📋 Orders Table
+
+### Table: `Orders`
+
+| OrderID | CustomerID | OrderDate | Amount |
+|---:|---:|---|---:|
+| 1001 | 101 | 2026-01-05 | 200 |
+| 1002 | 102 | 2026-01-07 | 500 |
+| 1003 | 101 | 2026-01-15 | 300 |
+| 1004 | 103 | 2026-01-20 | 100 |
+| 1005 | 102 | 2026-02-05 | 400 |
+| 1006 | 104 | 2026-02-10 | 800 |
+| 1007 | 103 | 2026-02-15 | 200 |
+| 1008 | 101 | 2026-02-20 | 400 |
+
+---
+
+## 💡 Expected Result
+
+First calculate the total spending for each customer:
+
+| CustomerID | Total Spending |
+|---:|---:|
+| 101 | 900 |
+| 102 | 900 |
+| 103 | 300 |
+| 104 | 800 |
+
+The average customer spending is:
+
+# ```text
+(900 + 900 + 300 + 800) / 4 = 725
+
+## Solution
+
+WITH CustomerSpending AS
+(
+    SELECT
+        CustomerID,
+        SUM(Amount) AS TotalSpending
+    FROM Orders
+    GROUP BY CustomerID
+),
+AverageSpending AS
+(
+    SELECT
+        AVG(TotalSpending) AS AvgCustomerSpending
+    FROM CustomerSpending
+)
+SELECT
+    cs.CustomerID,
+    cs.TotalSpending
+FROM CustomerSpending cs
+CROSS JOIN AverageSpending av
+WHERE cs.TotalSpending > av.AvgCustomerSpending;
