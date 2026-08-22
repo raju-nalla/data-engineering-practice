@@ -336,3 +336,121 @@ df_orders = (
 )
 
 df_orders.show()
+
+
+# PySpark Problem 5 — Inner Join Two DataFrames
+
+## 🎯 Difficulty
+
+Intermediate
+
+## 🧩 Problem
+
+You are given two PySpark DataFrames:
+
+- `orders` — contains customer order information.
+- `customers` — contains customer master information.
+
+Perform an **INNER JOIN** between the two DataFrames using `CustomerID`.
+
+The solution should return:
+
+- Order ID
+- Customer ID
+- Customer Name
+- City
+- Order Amount
+
+---
+
+## 📋 Orders DataFrame
+
+### DataFrame: `orders`
+
+| OrderID | CustomerID | OrderDate | Amount |
+|---:|---:|---|---:|
+| 1001 | 101 | 2026-01-05 | 250 |
+| 1002 | 102 | 2026-01-07 | 500 |
+| 1003 | 103 | 2026-01-10 | 300 |
+| 1004 | 104 | 2026-01-12 | 450 |
+| 1005 | 105 | 2026-01-15 | 600 |
+
+---
+
+## 📋 Customers DataFrame
+
+### DataFrame: `customers`
+
+| CustomerID | CustomerName | City |
+|---:|---|---|
+| 101 | Arun | Hyderabad |
+| 102 | Ravi | Bangalore |
+| 103 | Priya | Chennai |
+| 106 | Sneha | Mumbai |
+
+---
+
+## 💡 Expected Result
+
+Because this is an **INNER JOIN**, only customers that exist in both DataFrames should appear.
+
+| OrderID | CustomerID | CustomerName | City | Amount |
+|---:|---:|---|---|---:|
+| 1001 | 101 | Arun | Hyderabad | 250 |
+| 1002 | 102 | Ravi | Bangalore | 500 |
+| 1003 | 103 | Priya | Chennai | 300 |
+
+Orders for customers `104` and `105` are excluded because those customers don't exist in the `customers` DataFrame.
+
+---
+
+## 🎯 Skills Tested
+
+- PySpark DataFrame joins
+- `join()`
+- INNER JOIN
+- `alias()`
+- `F.col()`
+- Selecting columns after joins
+- Handling unmatched records
+
+---
+
+## 🧠 Approach
+
+We need to:
+
+1. Assign aliases to both DataFrames.
+2. Join the `orders` and `customers` DataFrames using `CustomerID`.
+3. Specify `"inner"` as the join type.
+4. Select only the required columns.
+
+The basic PySpark syntax is:
+
+## ```python
+df1.join(
+    df2,
+    join_condition,
+    "inner"
+)
+
+## Solution
+from pyspark.sql import functions as F
+
+df_innerJoin = (
+    orders.alias("o")
+    .join(
+        customers.alias("c"),
+        F.col("o.CustomerID") == F.col("c.CustomerID"),
+        "inner"
+    )
+    .select(
+        F.col("o.OrderID"),
+        F.col("o.CustomerID"),
+        F.col("c.CustomerName"),
+        F.col("c.City"),
+        F.col("o.Amount")
+    )
+)
+
+df_innerJoin.show()
